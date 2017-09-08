@@ -1,6 +1,8 @@
 # tgbot
 Telegram bot minimal command line interface
 
+Use `./tgbot -h` for help
+
 ## Examples
 
 ```shell
