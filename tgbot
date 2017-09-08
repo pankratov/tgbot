@@ -1,0 +1,71 @@
+#!/bin/sh
+
+token=$TG_BOT_TOKEN
+chat=$TG_BOT_CHAT
+
+
+
+help() {
+cat << EOF 
+
+
+	-t		bot token (you can also use TG_BOT_TOKEN  environment param)
+	-c		chat id (you can also use TG_BOT_CHAT  environment param)
+	-m		(optional) message in HTML format, e.g, "<b>Hi</b> there!". 
+					If absent request updates
+	-u		(optional) update offset. Must be greater by one than the highest among 
+					the identifiers of previously received updates.
+
+	Example:
+		tgbot -t "asdFD:2@#ASF#@%AFASF" -c 123122 -m "Hello, world"
+
+EOF
+}
+
+error() {
+	>&2 echo $1
+}
+
+while [ -n "$1" ]
+do
+	case "$1" in
+	-t) token=$2
+	   shift;;
+	-m) text=$2 
+		shift;;
+	-c) chat=$2
+	   shift;;
+	-u) update=$2
+	   shift;;
+	-h) help
+		exit 0;;
+	*) error "$1 is not an option" ;;
+	esac
+	shift
+done
+
+if [ -z "${token}" ]
+then
+	error "token parameter (-t) must be specified"
+	help
+	exit 1
+fi
+
+if [ -z "${text}" ]
+then
+	if [ -z "${update}" ]
+	then
+		curl -X POST https://api.telegram.org:443/bot$token/getUpdates
+	else
+		curl -X POST --header "Content-Type: application/json" --data "{\"offset\": \"$update\"}" https://api.telegram.org:443/bot$token/getUpdates
+	fi
+else
+	if [ -z "${chat}" ]
+	then
+		error "chat  parameter (-c) must be specified"
+		help
+		exit 1
+	fi
+	curl -X POST --header "Content-Type: application/json" --data "{\"chat_id\": \"$chat\", \"parse_mode\": \"HTML\", \"text\": \"$text\"}"  https://api.telegram.org:443/bot$token/sendMessage
+fi
+
